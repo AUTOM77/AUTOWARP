@@ -1,6 +1,6 @@
 [package]
 name = "aw"
-version = "0.0.2"
+version = "0.0.3"
 edition = "2021"
 
 [dependencies]
@@ -23,7 +23,7 @@ name = "ld_"
 path = "src/lib.rs"
 
 [profile.release]
-lto = true
+lto = false
 strip = true
 panic = 'abort'
 opt-level = 3
