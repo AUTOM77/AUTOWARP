@@ -6,18 +6,20 @@ const SEED: &str ="0U7h98No-L6987BhV-uDd80i36";
 
 pub async fn run_tokio(num: usize) -> Result<(), Box<dyn std::error::Error>> {
     let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(CAPACITY));
+    let seed = std::env::var("SEED").unwrap_or_else(|_| SEED.to_string());
 
     let tasks: Vec<_> = iter(0..num)
         .map(|_| {
             let semaphore = semaphore.clone();
+            let seed = seed.clone();
             async move {
                 let permit = semaphore.acquire_owned().await.unwrap();
                 let license = match client::WARP::build().await {
-                    Ok(mut a) => a.get_license(SEED.into()).await.unwrap(),
+                    Ok(mut a) => a.get_license(seed).await.unwrap(),
                     Err(_) => format!("error"),
                 };
 
-                println!("{:#?}", license);
+                println!("{}", license);
                 drop(permit);
             }
         })

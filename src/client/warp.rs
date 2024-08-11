@@ -116,7 +116,7 @@ impl WARP {
 
     pub async fn get_license(&mut self, seed: String) -> Result<String, Box<dyn std::error::Error>>{
         let license = self.update(seed).await.unwrap();
-        let seed = self.update(license.clone()).await.unwrap();
+        let _ = self.update(license.clone()).await.unwrap();
         let _ = self.delete().await.unwrap();
 
         Ok(license)
