@@ -10,3 +10,12 @@ pub fn get_key() -> String {
     res
 }
 
+pub fn encode(raw: &str) -> String {
+    let secret = BASE64.encode(raw.as_bytes());
+    secret
+}
+
+pub fn decode(secret: &str) -> String {
+    let raw = BASE64.decode(secret).unwrap();
+    String::from_utf8(raw).unwrap()
+}

@@ -1,44 +1,26 @@
-use tokio_stream::{StreamExt, iter};
 pub mod client;
-
-const CAPACITY: usize = 5;
-const SEED: &str ="0U7h98No-L6987BhV-uDd80i36";
-
-pub async fn run_tokio(num: usize) -> Result<(), Box<dyn std::error::Error>> {
-    let semaphore = std::sync::Arc::new(tokio::sync::Semaphore::new(CAPACITY));
-    let seed = std::env::var("SEED").unwrap_or_else(|_| SEED.to_string());
-
-    let tasks: Vec<_> = iter(0..num)
-        .map(|_| {
-            let semaphore = semaphore.clone();
-            let seed = seed.clone();
-            async move {
-                let permit = semaphore.acquire_owned().await.unwrap();
-                let license = match client::WARP::build().await {
-                    Ok(mut a) => a.get_license(seed).await.unwrap(),
-                    Err(_) => format!("error"),
-                };
-
-                println!("{}", license);
-                drop(permit);
-            }
-        })
-        .collect().await;
-
-    for task in tasks {
-        task.await;
-    }
-
-    Ok(())
-}
+use client::process;
 
 pub fn interface(num: usize) -> Result<(), Box<dyn std::error::Error>> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
-        .build()
-        .unwrap();
+        .build()?;
 
-    println!("Processing num: {:?}", num);
-    let _ = rt.block_on(run_tokio(num));
+    let new_warps = rt.block_on(process::batch_create(num));
+    println!("{:#?}", new_warps.len());
+    let seed_warps = rt.block_on(process::batch_seed(new_warps));
+    println!("{:#?}", seed_warps.len());
+    let update_warps = rt.block_on(process::batch_update(seed_warps));
+    println!("{:#?}", update_warps.len());
+
+    rt.block_on(process::batch_info(update_warps.clone()));
+
+    let delete_warps = rt.block_on(process::batch_update(update_warps));
+    println!("{:#?}", delete_warps.len());
+
+    for warp in &delete_warps{
+        println!("{}", warp.license());
+    }
+
     Ok(())
 }
