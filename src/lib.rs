@@ -1,6 +1,8 @@
 pub mod client;
 use client::process;
 
+const SECRET: &str = "secret.txt";
+
 pub fn interface(num: usize) -> Result<(), Box<dyn std::error::Error>> {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
@@ -22,5 +24,14 @@ pub fn interface(num: usize) -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", warp.license());
     }
 
+    Ok(())
+}
+
+pub fn get_pool() -> Result<(), Box<dyn std::error::Error>> {
+    let raw = std::fs::read_to_string(SECRET)?;
+    let secrete = raw.replace("\n", " ");
+    let pool = client::cipher::encode(&secrete);
+
+    println!("{:?}", pool);
     Ok(())
 }

@@ -129,12 +129,8 @@ impl WARP {
             return Err(format!("GET HTTP error: {}", response.text().await?).into());
         }
 
-        // let json = response.json().await?;
         let json: serde_json::Value = response.json().await?;
         let info = json["quota"].to_string();
-        // let caption = json["candidates"][0]["content"]["parts"][0]["text"]
-        //     .as_str()
-        //     .ok_or_else(|| format!("Failed to parse response: {}", response_text))?;
         Ok(info)
     }
 

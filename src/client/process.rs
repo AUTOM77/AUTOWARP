@@ -104,6 +104,9 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
 
     let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
     _pb.set_style(seed_style.clone());
+    if tasks.len()>100{
+        tokio::time::sleep(RETRY_DELAY).await;
+    }
     for task in tasks {
         if let Ok(Ok(warp)) = task.await {
             warps.push(warp);
@@ -151,6 +154,9 @@ pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
 
     let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
     _pb.set_style(update_style.clone());
+    if tasks.len()>100{
+        tokio::time::sleep(RETRY_DELAY).await;
+    }
     for task in tasks {
         if let Ok(Ok(warp)) = task.await {
             warps.push(warp);
@@ -198,6 +204,9 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
 
     let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
     _pb.set_style(delete_style.clone());
+    if tasks.len()>100{
+        tokio::time::sleep(RETRY_DELAY).await;
+    }
     for task in tasks {
         if let Ok(Ok(warp)) = task.await {
             warps.push(warp);
@@ -210,6 +219,11 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
 }
 
 pub async fn batch_info(warp: Vec<WARP>){
+    let mp = MultiProgress::new();
+    let info_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.green/red} {pos:>7}/{len:7}")
+        .unwrap()
+        .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
+
     let mut tasks = Vec::new();
 
     for _warp in warp{
@@ -219,43 +233,23 @@ pub async fn batch_info(warp: Vec<WARP>){
         tasks.push(task);
     }
 
+    let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
+    _pb.set_style(info_style.clone());
+
+    if tasks.len()>100{
+        tokio::time::sleep(RETRY_DELAY).await;
+    }
+    
     for task in tasks {
         if let Ok(Ok(info)) = task.await {
-            println!("{:#?}", info);
+            let quota:usize = info.parse().expect("Failed to convert quota to usize");
+            if quota == 24598562000000000{
+                _pb.inc(1);
+            }
+            else {
+                print!("-{}-", quota);
+            }
         }
     }
+    _pb.finish();
 }
-
-
-
-    // let _pb = mp.add(ProgressBar::new(seed_tasks.len() as u64));
-    // _pb.set_style(update_style.clone());
-    // for task in seed_tasks {
-    //     if let Ok(Ok(warp)) = task.await {
-    //         seed_warps.push(warp);
-    //     }
-    //     _pb.inc(1);
-    // }
-    // _pb.finish();
-
-    // tokio::time::sleep(RETRY_DELAY).await;
-    // let mut warps = Vec::new();
-    // let mut tasks = Vec::new();
-
-    // for sw in seed_warps{
-    //     let ss = sw.license();
-    //     let task = tokio::spawn(async move {
-    //         sw.update_license(ss).await
-    //     });
-    //     tasks.push(task);
-    // }
-
-    // let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    // _pb.set_style(update_style.clone());
-    // for task in tasks {
-    //     if let Ok(Ok(warp)) = task.await {
-    //         warps.push(warp);
-    //     }
-    //     _pb.inc(1);
-    // }
-    // _pb.finish();
