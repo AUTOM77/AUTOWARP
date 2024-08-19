@@ -12,7 +12,7 @@ use super::geo;
 
 pub async fn batch_create(num: usize) -> Vec<WARP> {
     let mp = MultiProgress::new();
-    let create_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/green} {pos:>7}/{len:7}")
+    let _style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/green} {pos:>7}/{len:7}")
         .unwrap()
         .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
 
@@ -32,7 +32,7 @@ pub async fn batch_create(num: usize) -> Vec<WARP> {
             _tasks.append(&mut tasks);
 
             let pb = mp.add(ProgressBar::new(_tasks.len() as u64));
-            pb.set_style(create_style.clone());
+            pb.set_style(_style.clone());
 
             for task in _tasks {
                 if let Ok(Ok(warp)) = task.await {
@@ -45,30 +45,35 @@ pub async fn batch_create(num: usize) -> Vec<WARP> {
             tokio::time::sleep(RETRY_DELAY).await;
         }
     }
-
-    let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    _pb.set_style(create_style.clone());
-    for task in tasks {
-        if let Ok(Ok(warp)) = task.await {
-            warps.push(warp);
+    if tasks.len() > 0{
+        if tasks.len()>100{
+            tokio::time::sleep(RETRY_DELAY).await;
         }
-        _pb.inc(1);
+        let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
+        _pb.set_style(_style.clone());
+        for task in tasks {
+            if let Ok(Ok(warp)) = task.await {
+                warps.push(warp);
+            }
+            _pb.inc(1);
+        }
+        _pb.finish();
     }
-    _pb.finish();
     warps
 }
 
 pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
     let mp = MultiProgress::new();
-    let seed_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/yellow} {pos:>7}/{len:7}")
+    let _style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/yellow} {pos:>7}/{len:7}")
         .unwrap()
         .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
-
-    let mut _warps = warp.clone();
-    let pool = cipher::decode(_EPOOL);
+    
+    let epool = std::env::var("EPOOL").unwrap_or_else(|_| _EPOOL.to_string());
+    let pool = cipher::decode(&epool);
     let seeds : Vec<_>  = pool.split(" ").into_iter().collect();
     let mut tasks = Vec::new();
     let mut warps = Vec::new();
+    let mut _warps = warp.clone();
 
     for _ in 0..MAX_SEED {
         for seed in &seeds {
@@ -88,7 +93,7 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
                 _tasks.append(&mut tasks);
 
                 let pb = mp.add(ProgressBar::new(_tasks.len() as u64));
-                pb.set_style(seed_style.clone());
+                pb.set_style(_style.clone());
 
                 for task in _tasks {
                     if let Ok(Ok(warp)) = task.await {
@@ -102,24 +107,26 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
         }
     }
 
-    let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    _pb.set_style(seed_style.clone());
-    if tasks.len()>100{
-        tokio::time::sleep(RETRY_DELAY).await;
-    }
-    for task in tasks {
-        if let Ok(Ok(warp)) = task.await {
-            warps.push(warp);
+    if tasks.len() > 0{
+        if tasks.len()>100{
+            tokio::time::sleep(RETRY_DELAY).await;
         }
-        _pb.inc(1);
+        let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
+        _pb.set_style(_style.clone());
+        for task in tasks {
+            if let Ok(Ok(warp)) = task.await {
+                warps.push(warp);
+            }
+            _pb.inc(1);
+        }
+        _pb.finish();
     }
-    _pb.finish();
     warps
 }
 
 pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
     let mp = MultiProgress::new();
-    let update_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/blue} {pos:>7}/{len:7}")
+    let _style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/blue} {pos:>7}/{len:7}")
         .unwrap()
         .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
 
@@ -139,7 +146,7 @@ pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
             _tasks.append(&mut tasks);
 
             let pb = mp.add(ProgressBar::new(_tasks.len() as u64));
-            pb.set_style(update_style.clone());
+            pb.set_style(_style.clone());
 
             for task in _tasks {
                 if let Ok(Ok(warp)) = task.await {
@@ -152,25 +159,27 @@ pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
         }
     }
 
-    let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    _pb.set_style(update_style.clone());
-    if tasks.len()>100{
-        tokio::time::sleep(RETRY_DELAY).await;
-    }
-    for task in tasks {
-        if let Ok(Ok(warp)) = task.await {
-            warps.push(warp);
+    if tasks.len() > 0{
+        if tasks.len()>100{
+            tokio::time::sleep(RETRY_DELAY).await;
         }
-        _pb.inc(1);
+        let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
+        _pb.set_style(_style.clone());
+        for task in tasks {
+            if let Ok(Ok(warp)) = task.await {
+                warps.push(warp);
+            }
+            _pb.inc(1);
+        }
+        _pb.finish();
     }
-    _pb.finish();
 
     warps
 }
 
 pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
     let mp = MultiProgress::new();
-    let delete_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/red} {pos:>7}/{len:7}")
+    let _style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.cyan/red} {pos:>7}/{len:7}")
         .unwrap()
         .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
 
@@ -189,7 +198,7 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
             _tasks.append(&mut tasks);
 
             let pb = mp.add(ProgressBar::new(_tasks.len() as u64));
-            pb.set_style(delete_style.clone());
+            pb.set_style(_style.clone());
 
             for task in _tasks {
                 if let Ok(Ok(warp)) = task.await {
@@ -202,25 +211,27 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
         }
     }
 
-    let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    _pb.set_style(delete_style.clone());
-    if tasks.len()>100{
-        tokio::time::sleep(RETRY_DELAY).await;
-    }
-    for task in tasks {
-        if let Ok(Ok(warp)) = task.await {
-            warps.push(warp);
+    if tasks.len() > 0{
+        if tasks.len()>100{
+            tokio::time::sleep(RETRY_DELAY).await;
         }
-        _pb.inc(1);
+        let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
+        _pb.set_style(_style.clone());
+        for task in tasks {
+            if let Ok(Ok(warp)) = task.await {
+                warps.push(warp);
+            }
+            _pb.inc(1);
+        }
+        _pb.finish();
     }
-    _pb.finish();
 
     warps
 }
 
 pub async fn batch_info(warp: Vec<WARP>){
     let mp = MultiProgress::new();
-    let info_style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.green/red} {pos:>7}/{len:7}")
+    let _style = ProgressStyle::with_template("[{elapsed_precise}] [{eta_precise}] {wide_bar:.green/red} {pos:>7}/{len:7}")
         .unwrap()
         .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈ ");
 
@@ -234,7 +245,7 @@ pub async fn batch_info(warp: Vec<WARP>){
     }
 
     let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
-    _pb.set_style(info_style.clone());
+    _pb.set_style(_style.clone());
 
     if tasks.len()>100{
         tokio::time::sleep(RETRY_DELAY).await;
