@@ -1,9 +1,10 @@
 use tokio::time::Duration;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
-const RETRY_DELAY: Duration = Duration::from_secs(120);
-const CAPACITY: usize = 1000;
-const MAX_SEED: usize = 2;
+const RETRY_DELAY: Duration = Duration::from_secs(360);
+const MAX_CAPACITY: usize = 1000;
+const MIN_CAPACITY: usize = 10;
+const MAX_SEED: usize = 5;
 const _EPOOL: &str = "SVQ4azYxMm4tSDhDNDJFajYtODAyN0pFVHAgbzY3OXZjMEYtM1ZMVzFrNzQtY0YwOWE0N1AgMHkyYjNVejUtUGNrSDk3NTQtM202NEExcnUgN1AwM0VXMk0tTWdsMzEyYjYtNXU2QzJ5NHMgMnZ0RDlJNzQtN3R3MTBhVDQtRVk1NzB1NlEgc0MyNTRPVjEtNkIwTTgxenMtOFltN0paMTMgOUw1R0VzODAtOHVTM3g5ZTEtOW12WTU2N2EgN2wyM1RXNWYtdjZUNTI5S3ctMWRvMlJBMzQgZTdNWEUyMDktaXg1MElyMTItOHEzY2IxN3ogM1BGSDg1OXktYzUxNEo5cHItMkU5NE0xUlggN0thYjEwTzQtOU9sdlc4NDMtNTBucWg3MmkgM0o0bmZ2OTIteDUzTTRBOFctWGQxdjkyN2IgYWhHMFM4MzEtME1tNTEzQkotSzduNlQxNVcgSzk0N0ZPRzUtNjRsMHZESDIteTc4MzFwVmkgcjE0dDlKeTUtOTZRM2gxVnYtN040YWkwcDggTTRGM2Q2N0EtYlo5azBxNzIteVVSZTg5MjQgSUJTTDgyNDYtSTM1OWlMNnEtNXdYMmZsNDcgUDZFMzE4Yk4tN2JJMlIwUTgtNzJKOWZ1NFYgVDVEWjgzRzAtUm1BMTQ5N3ctODFYeVJZMzcgOGw1MER4YzEtWms4ajdhOTAtMndOOTMxb0U=";
 
 use super::warp::WARP;
@@ -27,7 +28,7 @@ pub async fn batch_create(num: usize) -> Vec<WARP> {
 
         tasks.push(task);
 
-        if tasks.len() == CAPACITY {
+        if tasks.len() == MAX_CAPACITY {
             let mut _tasks = vec![];
             _tasks.append(&mut tasks);
 
@@ -46,7 +47,7 @@ pub async fn batch_create(num: usize) -> Vec<WARP> {
         }
     }
     if tasks.len() > 0{
-        if tasks.len()>100{
+        if tasks.len()>MIN_CAPACITY{
             tokio::time::sleep(RETRY_DELAY).await;
         }
         let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
@@ -71,6 +72,8 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
     let epool = std::env::var("EPOOL").unwrap_or_else(|_| _EPOOL.to_string());
     let pool = cipher::decode(&epool);
     let seeds : Vec<_>  = pool.split(" ").into_iter().collect();
+
+    println!("POOL: {:?}", seeds.len());
     let mut tasks = Vec::new();
     let mut warps = Vec::new();
     let mut _warps = warp.clone();
@@ -87,7 +90,7 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
                 break;
             }
 
-            if tasks.len() == CAPACITY {
+            if tasks.len() == MAX_CAPACITY {
                 tokio::time::sleep(RETRY_DELAY).await;
                 let mut _tasks = vec![];
                 _tasks.append(&mut tasks);
@@ -108,7 +111,7 @@ pub async fn batch_seed(warp: Vec<WARP>) -> Vec<WARP> {
     }
 
     if tasks.len() > 0{
-        if tasks.len()>100{
+        if tasks.len()>MIN_CAPACITY{
             tokio::time::sleep(RETRY_DELAY).await;
         }
         let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
@@ -140,7 +143,7 @@ pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
         });
         tasks.push(task);
 
-        if tasks.len() == CAPACITY {
+        if tasks.len() == MAX_CAPACITY {
             tokio::time::sleep(RETRY_DELAY).await;
             let mut _tasks = vec![];
             _tasks.append(&mut tasks);
@@ -160,7 +163,7 @@ pub async fn batch_update(warp: Vec<WARP>) -> Vec<WARP> {
     }
 
     if tasks.len() > 0{
-        if tasks.len()>100{
+        if tasks.len()>MIN_CAPACITY{
             tokio::time::sleep(RETRY_DELAY).await;
         }
         let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
@@ -192,7 +195,7 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
         });
         tasks.push(task);
 
-        if tasks.len() == CAPACITY {
+        if tasks.len() == MAX_CAPACITY {
             tokio::time::sleep(RETRY_DELAY).await;
             let mut _tasks = vec![];
             _tasks.append(&mut tasks);
@@ -212,7 +215,7 @@ pub async fn batch_delete(warp: Vec<WARP>) -> Vec<WARP> {
     }
 
     if tasks.len() > 0{
-        if tasks.len()>100{
+        if tasks.len()> MIN_CAPACITY{
             tokio::time::sleep(RETRY_DELAY).await;
         }
         let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
@@ -247,7 +250,7 @@ pub async fn batch_info(warp: Vec<WARP>){
     let _pb = mp.add(ProgressBar::new(tasks.len() as u64));
     _pb.set_style(_style.clone());
 
-    if tasks.len()>100{
+    if tasks.len()>MIN_CAPACITY{
         tokio::time::sleep(RETRY_DELAY).await;
     }
     
