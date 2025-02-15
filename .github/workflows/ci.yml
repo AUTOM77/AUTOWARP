@@ -3,8 +3,7 @@ name: ci
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CARGO_TERM_COLOR: always
-  CARGO_LOCA: "Cargo.toml"
-  CARGO_BIN: "aw"
+  CARGO: "Cargo.toml"
 
 permissions:
   contents: write
@@ -22,16 +21,14 @@ jobs:
   pre:
     runs-on: ubuntu-latest
     outputs:
-      cargo_loc: ${{ env.CARGO_LOCA }}
-      cargo_bin: ${{ env.CARGO_BIN }}
+      path: ${{ env.CARGO }}
     steps:
       - run: echo "Bypass GitHub Action Restriction"
 
-  call:
+  release:
     needs:
       - pre
-    uses: AUTOM77/Rust-Actions/.github/workflows/ci.yml@main
+    uses: AUTOM77/Rust-Actions/.github/workflows/release.yml@master
     with:
-      cargo_loc: ${{ needs.pre.outputs.cargo_loc }}
-      cargo_bin: ${{ needs.pre.outputs.cargo_bin }}
+      path: ${{ needs.pre.outputs.path }}
     secrets: inherit
