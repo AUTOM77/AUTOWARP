@@ -28,7 +28,7 @@ jobs:
   release:
     needs:
       - pre
-    uses: AUTOM77/Rust-Actions/.github/workflows/release.yml
+    uses: AUTOM77/Rust-Actions/.github/workflows/release.yml@master
     with:
       path: ${{ needs.pre.outputs.path }}
     secrets: inherit
